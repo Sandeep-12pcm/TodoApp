@@ -1,0 +1,47 @@
+/* calendar.css */
+.react-calendar {
+    background-color: #1e293b;  /*Dark background */
+    color: white;
+    border-radius: 12px;
+    padding: 10px;
+    border: none;
+  }
+  
+  .react-calendar__tile {
+    background: #334155;
+    border-radius: 8px;
+    margin: 4px;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .react-calendar__tile:hover {
+    background: #475569;
+    color: white;
+  }
+  
+  .react-calendar__tile--active {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  .react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    background: #1e293b;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .react-calendar__navigation button {
+    color: white;
+    font-weight: bold;
+  }
+  
+  .react-calendar__month-view__days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
