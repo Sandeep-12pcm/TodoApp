@@ -3,24 +3,26 @@ import { v4 as uuidv4 } from "uuid";
 import "react-calendar/dist/Calendar.css";
 import CalendarView from "./CalendarView";
 import UpNextTasks from "./UpNextTasks";
+import { getTasks, addTaskapi, deleteTaskapi, toggleTaskComplete } from "../api";
 
 const TodayTasks = ({ tasks, toggleComplete, deleteTask }) => (
   <div>
     <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">All Tasks</h2>
     <ul className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
       {tasks.length > 0 ? tasks.map(task => (
-        <li key={task.id} className="p-3 border-b flex justify-between items-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-all rounded-lg">
+        <li key={task._id || task.id || Math.random()}
+          className="p-3 border-b flex justify-between items-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-all rounded-lg">
+
           <span
-            className={`text-lg font-medium cursor-pointer ${task.completed ? "line-through text-gray-400" : "text-gray-900 dark:text-gray-200"
-              }`}
-            onClick={() => toggleComplete(task.id)}
+            className={`text-lg font-medium cursor-pointer ${task.completed ? "line-through text-gray-400" : "text-gray-900 dark:text-gray-200"}`}
+            onClick={() => toggleComplete(task._id || task.id)}
           >
             {task.text}
           </span>
 
           <button
-            onClick={() => deleteTask(task.id)}
-            className=" text-white px-2 py-1 rounded-lg hover:bg-blue-200 transition-all"
+            onClick={() => deleteTask(task._id || task.id)}
+            className="text-white px-2 py-1 rounded-lg hover:bg-blue-200 transition-all"
           >
             ✖
           </button>
@@ -106,32 +108,68 @@ export default function TodoApp() {
   });
 
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
-  const [newTask, setNewTask] = useState("");
+    const fetchTasks = async () => {
+      try {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+  const [newTask, setNewTask] = useState([]);
   const [reminderTime, setReminderTime] = useState("");
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [category, setCategory] = useState("General");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [darkMode, setDarkMode] = useState(false);
-  const deleteTask = (id) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  const deleteTask = async (id) => {
+    try {
+      await deleteTaskapi(id);
+      setTasks((prevTasks) => prevTasks.filter((task) => task._id !== id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
-  const toggleComplete = (id) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+
+  const toggleComplete = async (id) => {
+    const taskToUpdate = tasks.find((task) => task._id === id);
+    if (!taskToUpdate) return;
+
+    try {
+      const updatedTask = await toggleTaskComplete(id, !taskToUpdate.completed);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task._id === id ? { ...task, completed: updatedTask.completed } : task
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling task:", error);
+    }
   };
-  const addTask = () => {
+
+  const addTask = async () => {
+    console.log("Tasks:", tasks);
     if (newTask.trim() === "") return;
-    const reminderTimestamp = reminderEnabled && reminderTime ? new Date(reminderTime).getTime() : null;
-    setTasks([...tasks, { id: uuidv4(), text: newTask, completed: false, reminder: reminderTimestamp, category }]);
-    setNewTask("");
-    setReminderTime("");
-    setReminderEnabled(false);
-    setCategory("General");
+    const newTaskObj = {
+      text: newTask,
+      completed: false,
+      category,
+      reminder: reminderEnabled ? new Date(reminderTime).getTime() : null,
+    };
+
+    try {
+      const createdTask = await addTaskapi(newTaskObj);
+      setTasks((prev) => [...prev, createdTask]); // Update state with new task from backend
+      setNewTask("");
+      setReminderTime("");
+      setReminderEnabled(false);
+      setCategory("General");
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
   };
 
   return (
@@ -146,7 +184,9 @@ export default function TodoApp() {
           <TodayTasks tasks={tasks} toggleComplete={toggleComplete} deleteTask={deleteTask} />
         </div>
         <CalendarView selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-        <UpNextTasks tasks={tasks} />
+        <div className="">
+          <UpNextTasks tasks={tasks} />
+        </div>
       </div>
     </div>
   );
