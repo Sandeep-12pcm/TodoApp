@@ -1,7 +1,7 @@
 import React from 'react'
 import TodoApp from './components/TodoApp'
 // import Header from './components/Header'
-// import TempNav from './components/TempNav'
+import TempNav from './components/TempNav'
 // import Footer from './components/Footer'
 // import Navbar from './components/TempNav'
 const App = () => {
@@ -12,9 +12,9 @@ const App = () => {
         <Header />
         <Navbar />
       </div>
-        <TempNav />
-        <Footer /> */}
-        <TodoApp/>
+      <Footer /> */}
+      {/* <TempNav /> */}
+        <TodoApp />
       </div>
     </>
   )
